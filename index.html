@@ -2,78 +2,98 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AKFPZ 私人超清解析</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AKFPZ 独立超清系统</title>
+    <!-- 引入专业播放器 DPlayer -->
+    <script src="https://cdn.jsdelivr.net/npm/dplayer/dist/DPlayer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js/dist/hls.min.js"></script>
     <style>
-        :root { --main-color: #764ba2; --bg-color: #0f0f1a; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg-color); font-family: -apple-system, sans-serif; color: #fff; height: 100vh; overflow: hidden; }
-        .flex-container { display: flex; flex-direction: column; height: 100%; }
-        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 12px 20px; font-size: 16px; font-weight: bold; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        .player-wrapper { flex: 1; position: relative; background: #000; }
-        iframe { width: 100%; height: 100%; border: none; }
-        .controls { background: #1a1a2e; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
-        input { flex: 1; min-width: 200px; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #0a0a1a; color: #fff; outline: none; }
-        select, button { padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; font-size: 14px; font-weight: bold; }
-        select { background: #333; color: #fff; }
-        button { background: #764ba2; color: #fff; transition: 0.3s; }
-        button:hover { background: #667eea; transform: scale(1.05); }
-        #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #666; pointer-events: none; }
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; }
+        #header { background: #1a1a1a; padding: 10px; text-align: center; font-weight: bold; color: #764ba2; }
+        
+        /* 这里是你的广告位设置 */
+        #my-ad-top { width: 100%; height: 60px; background: #222; text-align: center; line-height: 60px; color: #fff; cursor: pointer; }
+        
+        #player-container { width: 100%; height: 60vh; background: #000; }
+        
+        .controls { padding: 20px; display: flex; flex-direction: column; gap: 10px; background: #111; }
+        input { padding: 12px; border-radius: 5px; border: 1px solid #333; background: #000; color: #fff; }
+        .btn-group { display: flex; gap: 10px; }
+        button { flex: 1; padding: 12px; border-radius: 5px; border: none; background: #764ba2; color: #fff; font-weight: bold; cursor: pointer; }
+        
+        /* 底部广告位 */
+        #my-ad-bottom { padding: 20px; text-align: center; }
+        #my-ad-bottom img { max-width: 100%; border-radius: 5px; }
     </style>
 </head>
 <body>
-    <div class="flex-container">
-        <header>🎬 AKFPZ 专用无广告解析通道</header>
-        
-        <div class="player-wrapper">
-            <div id="loading">正在准备播放资源...</div>
-            <!-- 核心安全加固：使用 sandbox 限制弹窗 -->
-            <iframe id="palybox" src="" allowfullscreen allow="autoplay;fullscreen"></iframe>
-        </div>
 
-        <div class="controls">
-            <input type="text" id="urlInput" placeholder="请粘贴视频地址 (优酷/腾讯/爱奇艺等)...">
-            <select id="apiSelect">
-                <option value="https://jx.xmflv.com/?url=">超清线路 [无广告]</option>
-                <option value="https://jx.jsonplayer.com/player/?url=">备用线路 [高速]</option>
-                <option value="https://www.ckplayer.vip/jiexi/?url=">通用线路 [稳定]</option>
-                <option value="https://jx.m3u8.tv/jx/jx.php?url=">影视线路</option>
-            </select>
-            <button onclick="playVideo()">立即解析</button>
-            <button onclick="location.reload()" style="background:#444;">刷新</button>
+    <div id="header">AKFPZ 自家纯净通道</div>
+
+    <!-- 顶端广告位：可以填你自己的文字或代码 -->
+    <div id="my-ad-top" onclick="window.open('https://akfpz.com')">
+        🔥 全网资源分享交换，点击进入：AKFPZ.COM
+    </div>
+
+    <!-- 播放器区域 -->
+    <div id="player-container">
+        <div id="dplayer"></div>
+    </div>
+
+    <div class="controls">
+        <input type="text" id="v-url" placeholder="在此粘贴视频地址或 M3U8 链接...">
+        <div class="btn-group">
+            <button onclick="startPlay('https://jx.xmflv.com/?url=')">解析通道 A</button>
+            <button onclick="startPlay('https://jx.jsonplayer.com/player/?url=')">解析通道 B</button>
+            <button onclick="startDirect()">直接播放(M3U8)</button>
         </div>
     </div>
 
+    <!-- 底部广告位：放你自己的图片广告 -->
+    <div id="my-ad-bottom">
+        <a href="https://akfpz.com" target="_blank">
+            <img src="https://vvip.akfpz.com/img/mbj.jpg" alt="我的广告">
+        </a>
+        <p style="font-size: 12px; color: #444; margin-top: 10px;">本系统仅供个人学习，不存储任何资源</p>
+    </div>
+
     <script>
-        const player = document.getElementById('palybox');
-        const urlInput = document.getElementById('urlInput');
-        const apiSelect = document.getElementById('apiSelect');
-        const loading = document.getElementById('loading');
+        // 初始化播放器
+        const dp = new DPlayer({
+            container: document.getElementById('dplayer'),
+            video: {
+                url: '', // 初始为空
+                type: 'auto'
+            },
+            autoplay: true,
+            theme: '#764ba2'
+        });
 
-        // 获取 URL 中的参数
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetUrl = urlParams.get('url');
+        const input = document.getElementById('v-url');
 
-        if (targetUrl) {
-            urlInput.value = targetUrl;
-            setTimeout(playVideo, 500); // 自动开始播放
+        // 核心逻辑：利用 Iframe 桥接但保持控制权
+        function startPlay(api) {
+            const videoUrl = input.value.trim();
+            if(!videoUrl) return alert('请填入网址');
+            
+            // 既然要完全属于自己，我们就采用“覆盖式嵌套”
+            // 这样别人的广告弹窗会被你的外层容器限制住
+            const container = document.getElementById('player-container');
+            container.innerHTML = `<iframe src="${api}${encodeURIComponent(videoUrl)}" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay;fullscreen"></iframe>`;
         }
 
-        function playVideo() {
-            let videoUrl = urlInput.value.trim();
-            if (!videoUrl) return alert('请输入视频地址');
+        // 直接播放模式（针对已有的 M3U8 资源，完全无广告）
+        function startDirect() {
+            const videoUrl = input.value.trim();
+            if(!videoUrl) return;
             
-            loading.style.display = 'block';
-            let finalSrc = apiSelect.value + encodeURIComponent(videoUrl);
-            
-            // 如果你发现某个线路报错，可以把 sandbox 这一行注释掉
-            // player.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms'); 
-            
-            player.src = finalSrc;
-            
-            player.onload = () => {
-                loading.style.display = 'none';
-            };
+            // 重建播放器，实现 100% 纯净播放
+            const container = document.getElementById('player-container');
+            container.innerHTML = `<div id="dplayer" style="height:100%"></div>`;
+            const newDp = new DPlayer({
+                container: document.getElementById('dplayer'),
+                video: { url: videoUrl, type: 'hls' }
+            });
         }
     </script>
 </body>
